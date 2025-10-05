@@ -2,6 +2,7 @@
   "name": "playwright",
   "version": "1.0.0",
   "main": "index.js",
+  "type": "module",
   "scripts": {},
   "keywords": [],
   "author": "",
@@ -10,5 +11,11 @@
   "devDependencies": {
     "@playwright/test": "^1.55.1",
     "@types/node": "^24.6.1"
+  },
+  "dependencies": {
+    "exec": "^0.2.1",
+    "playwright-extra": "^4.3.6",
+    "puppeteer-extra-plugin-stealth": "^2.11.2",
+    "xlsx": "^0.18.5"
   }
 }
