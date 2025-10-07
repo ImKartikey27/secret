@@ -13,7 +13,7 @@ test("Milestone 1: Access G2 and solve captcha", async () => {
   while (hasNextPage) {
     await page.goto(
       `https://www.g2.com/categories/billing?order=g2_score&page=${currPage}#product-list`, {
-        timeout: 90000
+        timeout: 120000
       }
     );
 

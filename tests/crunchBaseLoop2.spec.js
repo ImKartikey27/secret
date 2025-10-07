@@ -1,7 +1,7 @@
 // extract_urls.js
 import XLSX from "xlsx";
 
-const filePath = "/Users/kartikeysangal/Desktop/WebDev/Freelance/playwright/crunchBase-Results/crunchbase_orgs_20251004_185446.xlsx"
+const filePath = "/Users/kartikeysangal/Desktop/WebDev/Freelance/playwright/crunchBase-Results/crunchbase_orgs.xlsx"
 
 
 const wb = XLSX.readFile(filePath);
