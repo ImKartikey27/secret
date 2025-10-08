@@ -9,11 +9,10 @@ test("Access crunchbase and solve captcha", async () => {
     const page = context.pages()[0]; // Use existing tab
 
     await page.goto(
-      `https://www.crunchbase.com/discover/organization.companies`,{
+      `https://www.crunchbase.com/discover/organization.companies/183f107d1c30c240590a1039aa3aa1b7`,{
         waitUntil: "networkidle"
       }
     );
-//https://www.crunchbase.com/discover/organization.companies/field/hubs/org_num/fintech-companies
 
 
     const currentUrl = page.url();

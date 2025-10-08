@@ -1,6 +1,5 @@
 import { test, expect, chromium } from "@playwright/test";
 import * as fs from "fs";
-import path from "path";
 import XLSX from "xlsx";
 
 const filePath =
