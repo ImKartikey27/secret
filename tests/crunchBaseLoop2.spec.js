@@ -33,7 +33,9 @@ test("Access crunchbase and solve captcha", async () => {
           waitForLoadState: "networkidle"
         });
 
-        await page.waitForTimeout(3000)
+        const delay = Math.floor(Math.random() * (6000 - 3000 + 1)) + 3000;
+        await page.waitForTimeout(delay);
+
 
         const currentUrl = page.url();
         const pageTitle = await page.title();
@@ -49,11 +51,14 @@ test("Access crunchbase and solve captcha", async () => {
         const resultdir = path.join(process.cwd(), "crunchbaseLoop2");
         const filepath = path.join(resultdir, filename);
         await fs.writeFile(filepath, renderedHtml);
+
+        await page.mouse.move(500, 400, { steps: 20 });
+
     }
         if(pageTitle === "Just a moment..."){
           //captcha cloudflare
           console.log("Captcha Cloudflare detected")
-          await page.waitForTimeout(5000)
+          await page.waitForTimeout(3000)
           const renderedHtml = await page.content();
           const filename = `crunchBase-${i}.html`;
           const resultdir = path.join(process.cwd(), "crunchbaseLoop2");
@@ -63,13 +68,7 @@ test("Access crunchbase and solve captcha", async () => {
         }
       
 
-
     }
 
-    
-
-
-
-    
     
 });

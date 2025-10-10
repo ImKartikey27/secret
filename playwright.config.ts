@@ -12,7 +12,7 @@ export default defineConfig({
   workers: 1, // Single worker
   /* Reporter to use. See https://playwright.dev/docs/test-reporters */
   reporter: 'html',
-  timeout: 1200000, // 2 minutes for manual intervention
+  timeout: 120000000, // 2 minutes for manual intervention
   /* Shared settings for all the projects below. See https://playwright.dev/docs/api/class-testoptions. */
   use: {
     actionTimeout: 30000,

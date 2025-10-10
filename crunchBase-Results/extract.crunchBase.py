@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
-Crunchbase HTML Data Extractor
-This script extracts organization data from Crunchbase search results HTML files.
+Crunchbase HTML Data Extractor - Multi-file Version
+This script extracts organization data from multiple Crunchbase search results HTML files.
 """
 
 import pandas as pd
@@ -10,6 +10,7 @@ import re
 import json
 import sys
 import os
+import glob
 
 def extract_crunchbase_data(html_file_path):
     """Extract organization data from Crunchbase HTML file"""
@@ -18,7 +19,7 @@ def extract_crunchbase_data(html_file_path):
         with open(html_file_path, 'r', encoding='utf-8') as file:
             html_content = file.read()
     except Exception as e:
-        print(f"Error reading file: {e}")
+        print(f"Error reading file {html_file_path}: {e}")
         return []
     
     soup = BeautifulSoup(html_content, 'html.parser')
@@ -118,13 +119,27 @@ def extract_crunchbase_data(html_file_path):
     
     return filtered_orgs
 
-def save_to_excel(organizations, output_file='crunchbase_organizations.xlsx'):
+def load_existing_data(excel_file):
+    """Load existing data from Excel file if it exists"""
+    if os.path.exists(excel_file):
+        try:
+            df = pd.read_excel(excel_file, engine='openpyxl')
+            print(f"Loaded {len(df)} existing organizations from {excel_file}")
+            return df
+        except Exception as e:
+            print(f"Error reading existing Excel file: {e}")
+            return pd.DataFrame()
+    else:
+        print(f"Excel file {excel_file} doesn't exist. Will create new file.")
+        return pd.DataFrame()
+
+def save_to_excel(all_organizations, output_file='crunchbase_orgs.xlsx'):
     """Save organization data to Excel file"""
-    if not organizations:
+    if not all_organizations:
         print("No organizations found.")
         return
     
-    df = pd.DataFrame(organizations)
+    df = pd.DataFrame(all_organizations)
     
     # Ensure required columns exist
     required_columns = ['Name', 'Identifier', 'URL']
@@ -132,29 +147,89 @@ def save_to_excel(organizations, output_file='crunchbase_organizations.xlsx'):
         if col not in df.columns:
             df[col] = ''
     
+    # Remove duplicates based on Name (case-insensitive)
+    df['Name_lower'] = df['Name'].str.lower()
+    df = df.drop_duplicates(subset=['Name_lower'], keep='first')
+    df = df.drop(columns=['Name_lower'])
+    
     try:
         df.to_excel(output_file, index=False, engine='openpyxl')
-        print(f"Extracted {len(df)} organizations saved to {output_file}")
+        print(f"Total {len(df)} unique organizations saved to {output_file}")
     except Exception as e:
         print(f"Error saving: {e}")
 
+def find_html_files():
+    """Find all crunchbase HTML files in current directory"""
+    pattern = 'crunchbase-*.html'
+    files = glob.glob(pattern)
+    
+    # Sort by number for consistent processing order
+    def get_number(filename):
+        match = re.search(r'crunchbase-(\d+)\.html', filename)
+        return int(match.group(1)) if match else 0
+    
+    files.sort(key=get_number)
+    return files
+
 def main():
-    html_file = 'crunchBase-1759584850668.html'
+    output_file = 'crunchbase_orgs.xlsx'
     
-    if len(sys.argv) > 1:
-        html_file = sys.argv[1]
+    # Find all HTML files matching the pattern
+    html_files = find_html_files()
     
-    if not os.path.exists(html_file):
-        print(f"File {html_file} not found.")
+    if not html_files:
+        print("No crunchbase-*.html files found in current directory.")
         return
     
-    organizations = extract_crunchbase_data(html_file)
+    print(f"Found {len(html_files)} HTML files to process:")
+    for file in html_files:
+        print(f"  - {file}")
     
-    if organizations:
-        output_file = f"crunchbase_orgs_{pd.Timestamp.now().strftime('%Y%m%d_%H%M%S')}.xlsx"
-        save_to_excel(organizations, output_file)
+    # Load existing data from Excel file
+    existing_df = load_existing_data(output_file)
+    existing_names = set()
+    
+    if not existing_df.empty:
+        existing_names = set(existing_df['Name'].str.lower())
+    
+    # Process all HTML files
+    all_new_organizations = []
+    
+    for html_file in html_files:
+        print(f"\nProcessing {html_file}...")
+        organizations = extract_crunchbase_data(html_file)
+        
+        if organizations:
+            print(f"  Found {len(organizations)} organizations in {html_file}")
+            all_new_organizations.extend(organizations)
+        else:
+            print(f"  No organizations found in {html_file}")
+    
+    if not all_new_organizations:
+        print("\nNo new organizations found in any files.")
+        return
+    
+    # Filter out organizations that already exist (case-insensitive)
+    new_organizations = []
+    for org in all_new_organizations:
+        if org['Name'].lower() not in existing_names:
+            new_organizations.append(org)
+    
+    print(f"\nFound {len(all_new_organizations)} total organizations")
+    print(f"Found {len(new_organizations)} new organizations (after removing duplicates)")
+    
+    # Combine existing and new data
+    if not existing_df.empty:
+        combined_organizations = existing_df.to_dict('records') + new_organizations
     else:
-        print("No organization data found.")
+        combined_organizations = new_organizations
+    
+    # Save to Excel
+    if combined_organizations:
+        save_to_excel(combined_organizations, output_file)
+        print(f"\n✅ Processing complete! Check {output_file}")
+    else:
+        print("\nNo new data to add.")
 
 if __name__ == "__main__":
     main()
