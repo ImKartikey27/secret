@@ -23,7 +23,14 @@ test("Access crunchbase and solve captcha", async () => {
   const context = browser.contexts()[0];
   const page = context.pages()[0];
 
-  for (let i = 0; i < size; i++) {
+  async function textOrEmpty(page, selector) {
+    const el = await page.$(selector);
+    if (!el) return "";
+    const t = await el.textContent();
+    return (t ?? "").trim();
+  }
+
+  for (let i = 353; i < size; i++) {
     await page.goto(`${urls[i]}`, {
       waitForLoadState: "networkidle",
     });
@@ -47,15 +54,17 @@ test("Access crunchbase and solve captcha", async () => {
 
       const CompanyName = await page.textContent("span.entity-name");
       const overview = await page.textContent("span.expanded-only-content");
-      const date_founded = await page.textContent(
-        "span.component--field-formatter.field-type-date_precision"
-      );
+      const date_founded = await textOrEmpty(page, "span.component--field-formatter.field-type-date_precision")
 
+      //scrape company domains
       const sel =
         "field-formatter.hide-external-link-icon link-formatter a.component--field-formatter.accent";
       await page.mouse.move(500, 400, { steps: 20 });
-      const href = await page.getAttribute(sel, "href");
+      let href = "";
+      const el1 = await page.$(sel);
+      if (el1) href = (await el1.getAttribute("href")) ?? "";
 
+      //scrape company locations
       const locations = await page.$$eval(
         'a.accent[title][href*="/search/organizations/field/organization/location_identifiers/"]',
         (as) =>
@@ -66,14 +75,17 @@ test("Access crunchbase and solve captcha", async () => {
           ].slice(0, 3)
       );
 
-      const headcount = await page.textContent(
-        'a.field-type-enum[href*="num_employees_enum"]'
-      );
+      //scrape company headcount
+      let headcount = "";
+      const el3 = await page.$('a.field-type-enum[href*="num_employees_enum"]');
+      if (el3) headcount = (await el3.textContent())?.trim() ?? "";
 
-      const linkedinUrl = await page.getAttribute(
-        'a[title="View on LinkedIn"]',
-        "href"
-      );
+      //scrape linkedin url
+      let linkedinUrl = "";
+      const el = await page.$('a[title="View on LinkedIn"]');
+      if (el) {
+        linkedinUrl = (await el.getAttribute("href")) ?? "";
+      }
 
       // const founders = await page.$$eval('a.accent[href^="/person/"]', (as) =>
       //   as
@@ -83,6 +95,7 @@ test("Access crunchbase and solve captcha", async () => {
 
       // console.log(founders);
 
+      //scrape emails
       const emails = await page.$$eval("field-formatter span", (spans) => {
         const re = /[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/i;
         return spans
@@ -90,13 +103,20 @@ test("Access crunchbase and solve captcha", async () => {
           .filter((t) => re.test(t));
       });
 
-      const description1 =
-        (await page.textContent("span.description.has-overflow p")) ?? "";
-      const description2 =
-        (await page.textContent("span.overflow-description p")) ?? "";
-      const description = description1 + " " + description2;
-      console.log(description);
+      //scrape description (added two different selectors)
 
+      const description1 =
+        (await textOrEmpty(page, "span.description.has-overflow p")) ||
+        (await textOrEmpty(page, "span.description")); // fallback
+
+      const description2 = await textOrEmpty(
+        page,
+        "span.overflow-description p"
+      );
+
+      const description = description1 + " " + description2;
+
+      //create company object
       const company_object = {
         Name: CompanyName ?? "",
         Overview: overview ?? "",
@@ -109,12 +129,11 @@ test("Access crunchbase and solve captcha", async () => {
         Description: description,
       };
 
-      const resultdir = path.join(process.cwd(), "output.excel")
-      const file = path.join(resultdir,"companies.jsonl")
-      await fs.mkdir(resultdir,{recursive: true})
-      const line = JSON.stringify(company_object) + "\n"
-      await fs.appendFile(file,line,"utf-8")
-
+      const resultdir = path.join(process.cwd(), "output.excel");
+      const file = path.join(resultdir, "companies.jsonl");
+      await fs.mkdir(resultdir, { recursive: true });
+      const line = JSON.stringify(company_object) + "\n";
+      await fs.appendFile(file, line, "utf-8");
 
       await page.mouse.move(500, 400, { steps: 20 });
     }
