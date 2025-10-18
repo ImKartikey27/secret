@@ -9,7 +9,7 @@ test("Access crunchbase and solve captcha", async () => {
     const page = context.pages()[0]; // Use existing tab
 
     await page.goto(
-      `https://www.crunchbase.com/discover/organization.companies/183f107d1c30c240590a1039aa3aa1b7`,{
+      `https://www.crunchbase.com/discover/organization.companies/e63a21b6dccf161a5eda1ea87e261d7c`,{
         waitUntil: "networkidle"
       }
     );

@@ -9,7 +9,7 @@ test("Access clay and solve captcha", async () => {
     const page = context.pages()[0]; // Use existing tab
 
     await page.goto(
-      `https://app.clay.com/workspaces/803882/workbooks/wb_0t3pm5djuzg2tRAM6jv/tables/t_0t3pm5fAET3iuCQiCjo/views/gv_0t3pm5fNZvNMJrDAdDc`,{
+      `https://www.cbinsights.com/research-unicorn-companies`,{
         waitUntil: "networkidle"
       }
     );
@@ -23,13 +23,13 @@ test("Access clay and solve captcha", async () => {
     console.log(" Page title:", pageTitle);
 
     if (
-      currentUrl.includes("app.clay.com") &&
+      currentUrl.includes("www.cbinsights.com") &&
       !pageTitle.includes("unsual activity")
     ) {
       console.log(`Entered clay page`);
 
       const renderedHtml = await page.content();
-      const filename = `clay-Loop-1.html`;
+      const filename = `sbinsights-1.html`;
       const resultdir = path.join(process.cwd(), "crunchBase-Results");
       const filepath = path.join(resultdir, filename);
       await fs.writeFile(filepath, renderedHtml);

@@ -30,7 +30,7 @@ test("Access crunchbase and solve captcha", async () => {
     return (t ?? "").trim();
   }
 
-  for (let i = 353; i < size; i++) {
+  for (let i = 96; i < size; i++) {
     await page.goto(`${urls[i]}`, {
       waitForLoadState: "networkidle",
     });
